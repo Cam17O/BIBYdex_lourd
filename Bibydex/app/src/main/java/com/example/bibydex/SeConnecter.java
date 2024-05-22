@@ -38,7 +38,6 @@ public class SeConnecter extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        // Initialisation des champs de texte
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextPassword = findViewById(R.id.editTextPassword);
     }
@@ -78,32 +77,27 @@ public class SeConnecter extends AppCompatActivity {
         String username = editTextUsername.getText().toString().trim();
         String password = editTextPassword.getText().toString().trim();
 
-        // Vérifier si les champs sont vides
         if (username.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Veuillez remplir tous les champs", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Appel de la méthode d'authentification
         authenticate(username, password);
     }
 
     private void authenticate(String username, String password) {
         OkHttpClient client = new OkHttpClient();
 
-        // Construction du corps de la requête
         RequestBody formBody = new FormBody.Builder()
                 .add("Name", username)
                 .add("password", password)
                 .build();
 
-        // Construction de la requête
         Request request = new Request.Builder()
                 .url("http://172.16.195.254:3000/login")
                 .post(formBody)
                 .build();
 
-        // Exécution de la requête de manière asynchrone
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
@@ -117,16 +111,12 @@ public class SeConnecter extends AppCompatActivity {
                     throw new IOException("Code inattendu : " + response);
                 }
 
-                // Lire la réponse du serveur
                 String responseData = response.body().string();
 
-                // Gérer la réponse du serveur
                 try {
                     JSONObject jsonObject = new JSONObject(responseData);
                     int userId = jsonObject.getInt("id_utilisateur");
-                    // Connexion réussie, récupérer l'ID de l'utilisateur
                     saveUserId(userId);
-                    // Rediriger vers une autre activité
                     Intent intent = new Intent(SeConnecter.this, Photo.class);
                     startActivity(intent);
                     finish();
@@ -139,9 +129,7 @@ public class SeConnecter extends AppCompatActivity {
     }
 
     private void saveUserId(int userId) {
-        // Stocker l'ID de l'utilisateur dans les préférences partagées ou toute autre méthode de stockage appropriée
-        // Par exemple, vous pouvez utiliser les SharedPreferences
-        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putInt("userId", userId);
         editor.apply();

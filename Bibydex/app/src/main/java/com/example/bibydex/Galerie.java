@@ -39,12 +39,10 @@ public class Galerie extends AppCompatActivity {
         recyclerViewPhotos = findViewById(R.id.recyclerViewPhotos);
         recyclerViewPhotos.setLayoutManager(new LinearLayoutManager(this));
 
-        // Récupérer l'ID de l'utilisateur connecté depuis SharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("user_prefs", MODE_PRIVATE);
-        int idUtilisateur = sharedPreferences.getInt("user_id", -1);
+        int idUtilisateur = sharedPreferences.getInt("userId", -1);
 
         if (idUtilisateur == -1) {
-            // ID utilisateur non trouvé, gestion de l'erreur
             Toast.makeText(this, "Utilisateur non connecté", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -72,7 +70,6 @@ public class Galerie extends AppCompatActivity {
                 }
         );
 
-        // Ajout de la requête à la file d'attente Volley
         RequestQueue queue = Volley.newRequestQueue(this);
         queue.add(request);
     }
