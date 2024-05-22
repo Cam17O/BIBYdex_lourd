@@ -2,6 +2,7 @@ package com.example.bibydex;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -75,7 +76,7 @@ public class Photo extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.connexion) {
-            Intent intent1 = new Intent(this, Accueil.class);
+            Intent intent1 = new Intent(this, SeConnecter.class);
             this.startActivity(intent1);
             return true;
         }
@@ -119,7 +120,7 @@ public class Photo extends AppCompatActivity {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
             File photoFile = bitmapToFile(this, imageBitmap); // Convertir le Bitmap en File
-            uploadPhoto(photoFile, 1, 1); // Appeler uploadPhoto avec le File et les IDs appropriés
+            uploadPhoto(photoFile); // Appeler uploadPhoto avec le File et les IDs appropriés
         }
         else if (requestCode == REQUEST_IMAGE_FROM_GALLERY && resultCode == RESULT_OK && data != null) {
             Uri imageUri = data.getData();
@@ -128,7 +129,7 @@ public class Photo extends AppCompatActivity {
             try {
                 Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
                 File photoFile = bitmapToFile(this, imageBitmap); // Convertir le Bitmap en File
-                uploadPhoto(photoFile, 1, 1); // Appeler uploadPhoto avec le File et les IDs appropriés
+                uploadPhoto(photoFile); // Appeler uploadPhoto avec le File et les IDs appropriés
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -136,18 +137,20 @@ public class Photo extends AppCompatActivity {
         }
     }
 
-    public void uploadPhoto(File photoFile, int userId, int galleryId) {
-        MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
+    public void uploadPhoto(File photoFile) {
+        SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
+        int loggedInUserId = sharedPreferences.getInt("userId", -1); // -1 est une valeur par défaut si l'ID de l'utilisateur n'est pas trouvé
 
-        userId = 1;
-        galleryId = 1;
+        int galleryId = 1;
+
+        MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
 
         OkHttpClient client = new OkHttpClient();
 
         // Construction de la requête
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("id_utilisateur", String.valueOf(userId))
+                .addFormDataPart("id_utilisateur", String.valueOf(loggedInUserId))
                 .addFormDataPart("id_galerie", String.valueOf(galleryId))
                 .addFormDataPart("photo", "photo.jpg", RequestBody.create(photoFile, MEDIA_TYPE_JPEG))
                 .build();

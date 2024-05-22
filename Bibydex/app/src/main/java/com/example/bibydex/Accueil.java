@@ -37,7 +37,7 @@ public class Accueil extends AppCompatActivity {
         int id = item.getItemId();
 
         if (id == R.id.connexion) {
-            Intent intent1 = new Intent(this,Accueil.class);
+            Intent intent1 = new Intent(this,SeConnecter.class);
             this.startActivity(intent1);
             return true;
         }
