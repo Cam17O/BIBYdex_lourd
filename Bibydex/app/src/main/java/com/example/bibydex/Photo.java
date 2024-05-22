@@ -37,26 +37,22 @@ import okhttp3.Callback;
 import okhttp3.Response;
 
 import android.Manifest;
-import android.content.pm.PackageManager;
-import com.example.bibydex.RetrofitInstance;
-
 
 public class Photo extends AppCompatActivity {
 
+    // Constantes pour les requêtes de capture d'image et d'accès à la galerie
     private static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_IMAGE_FROM_GALLERY = 2;
-    private static final int REQUEST_CODE = 100;
     private static final int REQUEST_STORAGE_PERMISSION = 99;
-    private ApiService apiService;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_photo);
 
+        // Configuration de la barre d'outils
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        apiService = RetrofitInstance.getApiService();
-
 
         // Demande de permissions de stockage
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -67,26 +63,31 @@ public class Photo extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        // Infler le menu; ceci ajoute les éléments à la barre d'action si elle est présente.
         getMenuInflater().inflate(R.menu.menu, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        // Gérer les clics sur les éléments de la barre d'action
         int id = item.getItemId();
 
+        // Si l'utilisateur clique sur "connexion"
         if (id == R.id.connexion) {
             Intent intent1 = new Intent(this, SeConnecter.class);
             this.startActivity(intent1);
             return true;
         }
 
+        // Si l'utilisateur clique sur "photo"
         if (id == R.id.photo) {
             Intent intent1 = new Intent(this, Photo.class);
             this.startActivity(intent1);
             return true;
         }
 
+        // Si l'utilisateur clique sur "galerie"
         if (id == R.id.galerie) {
             Intent intent1 = new Intent(this, Galerie.class);
             this.startActivity(intent1);
@@ -96,6 +97,7 @@ public class Photo extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // Méthode pour prendre une photo avec l'appareil photo
     public void takePhoto(View view) {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
@@ -105,6 +107,7 @@ public class Photo extends AppCompatActivity {
         }
     }
 
+    // Méthode pour choisir une photo de la galerie
     public void chooseFromGallery(View view) {
         Intent pickPhotoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         pickPhotoIntent.setType("image/*");
@@ -113,41 +116,40 @@ public class Photo extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
         super.onActivityResult(requestCode, resultCode, data);
 
+        // Gérer le résultat de la capture d'image
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK && data != null) {
             Bundle extras = data.getExtras();
             Bitmap imageBitmap = (Bitmap) extras.get("data");
             File photoFile = bitmapToFile(this, imageBitmap); // Convertir le Bitmap en File
-            uploadPhoto(photoFile); // Appeler uploadPhoto avec le File et les IDs appropriés
+            uploadPhoto(photoFile); // Appeler uploadPhoto avec le fichier et les IDs appropriés
         }
+        // Gérer le résultat de la sélection d'image depuis la galerie
         else if (requestCode == REQUEST_IMAGE_FROM_GALLERY && resultCode == RESULT_OK && data != null) {
             Uri imageUri = data.getData();
-            // Convertir l'URI en Bitmap si nécessaire et appeler uploadPhoto(imageBitmap);
-
             try {
                 Bitmap imageBitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
                 File photoFile = bitmapToFile(this, imageBitmap); // Convertir le Bitmap en File
-                uploadPhoto(photoFile); // Appeler uploadPhoto avec le File et les IDs appropriés
-            }
-            catch (IOException e) {
+                uploadPhoto(photoFile); // Appeler uploadPhoto avec le fichier et les IDs appropriés
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    // Méthode pour télécharger la photo sur le serveur
     public void uploadPhoto(File photoFile) {
+        // Récupérer l'ID de l'utilisateur connecté depuis les préférences partagées
         SharedPreferences sharedPreferences = getSharedPreferences("MyPrefs", MODE_PRIVATE);
         int loggedInUserId = sharedPreferences.getInt("userId", -1); // -1 est une valeur par défaut si l'ID de l'utilisateur n'est pas trouvé
-
         int galleryId = 1;
 
         MediaType MEDIA_TYPE_JPEG = MediaType.parse("image/jpeg");
 
         OkHttpClient client = new OkHttpClient();
 
-        // Construction de la requête
+        // Construction de la requête HTTP
         RequestBody requestBody = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("id_utilisateur", String.valueOf(loggedInUserId))
@@ -171,7 +173,7 @@ public class Photo extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 if (!response.isSuccessful()) {
-                    throw new IOException("Unexpected code " + response);
+                    throw new IOException("Code inattendu : " + response);
                 }
 
                 // Lire la réponse si nécessaire
@@ -184,7 +186,7 @@ public class Photo extends AppCompatActivity {
         });
     }
 
-
+    // Méthode pour convertir un Bitmap en fichier
     public File bitmapToFile(Context context, Bitmap bitmap) {
         File filesDir = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
         File imageFile = new File(filesDir, generateFileName());
@@ -200,6 +202,7 @@ public class Photo extends AppCompatActivity {
         }
     }
 
+    // Méthode pour générer un nom de fichier unique basé sur la date et l'heure actuelles
     private String generateFileName() {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         return "IMG_" + timeStamp + ".jpg";
